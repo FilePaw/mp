@@ -1,4 +1,3 @@
-$verify = "ato";
 $lisans = get_option('mp_lisans');
 $adres = get_bloginfo('home');
 $adres = str_replace(array('www.','https://','http://','/'),array('','','',''),$adres);
