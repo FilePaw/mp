@@ -1,0 +1,5 @@
+$lisans = get_option('mp_lisans');
+$adres = get_bloginfo('home');
+$adres = str_replace(array('www.','https://','http://','/'),array('','','',''),$adres);
+$adres = str_replace("0","4",md5(bin2hex(crc32(bin2hex("$adres")))));
+if( ! is_admin() && $adres != $lisans ){ die("Geçersiz lisans kodu. Sorun olduğunu düşünüyorsanız lütfen benimle <a href='https://www.r10.net/profil/93341-atakanates.html'><b>buradan</b></a> iletişime geçiniz."); }
