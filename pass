@@ -1,1 +1,1 @@
-$adres = str_replace("0","4",md5(bin2hex(crc32(bin2hex("$u3558887683")))));
+$adres = str_replace("0","4",md5(bin2hex(crc32(bin2hex("$adres")))));
