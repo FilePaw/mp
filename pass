@@ -1,4 +1,3 @@
-<?php
   function moneypressVer(){ echo "1.0.0";  }
   
 /* Tema Ayarları */
@@ -703,4 +702,4 @@ function mpReklam( $content ) {
 }
   add_filter( 'the_content', 'mpReklam' );
 }
-?>
+
