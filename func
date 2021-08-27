@@ -234,24 +234,6 @@ foreach ($temaBilesenler as $icerik)
 	$theme_colors = array(); $theme_colors[] = array( 'slug'=>'mp_renk', 'label' => __('Genel Tema Rengi', 'moneypress') ); foreach( $theme_colors as $color ) { $wp_customize->add_setting( $color['slug'], array( 'default' => $color['default'], 'sanitize_callback' => 'sanitize_hex_color', 'type' => 'option', 'capability' => 'edit_theme_options' ) ); $wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, $color['slug'], array('label' => $color['label'], 'section' => 'renk', 'settings' => $color['slug']) ) ); }
   }
   add_action( 'customize_register', 'moneypressFunc' );
-  
-  /* kırıntılar */
-    function breadcrumb() {
-      if (!is_home()) { $i = 0;
-        $string = '<nav style="--bs-breadcrumb-divider: \'»\' ;" aria-label="Breadcrumbs" data-no-translation-aria-label=""><ol class="breadcrumb" itemscope itemtype="https://schema.org/BreadcrumbList"><li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href='.get_bloginfo('home').' itemprop="item" rel="nofollow">Anasayfa</a><meta itemprop="position" content="'.$i++.'" /></li>';
-        if (is_category() || is_single()) {
-			$category_id = get_cat_ID(get_the_category()[0]->cat_name); $category_link = get_category_link( $category_id );
-          $string .= '<li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="'.esc_url( $category_link ).'" itemprop="item" title="'.get_the_category()[0]->cat_name.' Kategorisi"><span itemprop="name">' . get_the_category()[0]->cat_name . '</span></a><meta itemprop="position" content="'.$i++.'" /></li>';
-          if (is_single()) {
-            $string .= '<li class="breadcrumb-item fw-bold"><small itemprop="name">' . get_the_title() . '</small><meta itemprop="position" content="'.$i++.'" /></li>';
-          }
-        } elseif (is_page()) {
-          $string .= '<li class="breadcrumb-item"><small>' . get_the_title() . '</small><meta itemprop="position" content="'.$i++.'" /></li>';
-        }
-        echo $string;
-      }
-      echo "</ol></nav>";
-    }
 	
 
   // Lisans  
@@ -325,88 +307,6 @@ if($paged > 2 && $paged > $range+1 && $showitems < $pages) echo '<li class="page
  echo "</ul></nav>";
  }
 }
-
-// Menü
-class bootstrap_5_wp_nav_menu_walker extends Walker_Nav_menu
-{
-  private $current_item;
-  private $dropdown_menu_alignment_values = [
-    'dropdown-menu-start',
-    'dropdown-menu-end',
-    'dropdown-menu-sm-start',
-    'dropdown-menu-sm-end',
-    'dropdown-menu-md-start',
-    'dropdown-menu-md-end',
-    'dropdown-menu-lg-start',
-    'dropdown-menu-lg-end',
-    'dropdown-menu-xl-start',
-    'dropdown-menu-xl-end',
-    'dropdown-menu-xxl-start',
-    'dropdown-menu-xxl-end'
-  ];
-
-  function start_lvl(&$output, $depth = 0, $args = null)
-  {
-    $dropdown_menu_class[] = '';
-    foreach($this->current_item->classes as $class) {
-      if(in_array($class, $this->dropdown_menu_alignment_values)) {
-        $dropdown_menu_class[] = $class;
-      }
-    }
-    $indent = str_repeat("\t", $depth);
-    $submenu = ($depth > 0) ? ' sub-menu' : '';
-    $output .= "\n$indent<ul class=\"dropdown-menu$submenu " . esc_attr(implode(" ",$dropdown_menu_class)) . " depth_$depth\">\n";
-  }
-
-  function start_el(&$output, $item, $depth = 0, $args = null, $id = 0)
-  {
-    $this->current_item = $item;
-
-    $indent = ($depth) ? str_repeat("\t", $depth) : '';
-
-    $li_attributes = '';
-    $class_names = $value = '';
-
-    $classes = empty($item->classes) ? array() : (array) $item->classes;
-
-    $classes[] = ($args->walker->has_children) ? 'dropdown' : '';
-    $classes[] = 'nav-item';
-    $classes[] = 'nav-item-' . $item->ID;
-    if ($depth && $args->walker->has_children) {
-      $classes[] = 'dropdown-menu dropdown-menu-end';
-    }
-
-    $class_names =  join(' ', apply_filters('nav_menu_css_class', array_filter($classes), $item, $args));
-    $class_names = ' class="' . esc_attr($class_names) . '"';
-
-    $id = apply_filters('nav_menu_item_id', 'menu-item-' . $item->ID, $item, $args);
-    $id = strlen($id) ? ' id="' . esc_attr($id) . '"' : '';
-
-    $output .= $indent . '<li ' . $id . $value . $class_names . $li_attributes . '>';
-
-    $attributes = !empty($item->attr_title) ? ' title="' . esc_attr($item->attr_title) . '"' : '';
-    $attributes .= !empty($item->target) ? ' target="' . esc_attr($item->target) . '"' : '';
-    $attributes .= !empty($item->xfn) ? ' rel="' . esc_attr($item->xfn) . '"' : '';
-    $attributes .= !empty($item->url) ? ' href="' . esc_attr($item->url) . '"' : '';
-
-    $active_class = ($item->current || $item->current_item_ancestor) ? 'active' : '';
-    
-	$nav_link_class = ( $depth > 0 ) ? 'dropdown-item ' : 'nav-link text-white ';
-	
-    $attributes .= ( $args->walker->has_children ) ? ' class="'. $nav_link_class . $active_class . ' dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"' : ' class="'. $nav_link_class . $active_class . '"';
-
-    $item_output = $args->before;
-    $item_output .= '<a' . $attributes . '>';
-    $item_output .= $args->link_before . apply_filters('the_title', $item->title, $item->ID) . $args->link_after;
-    $item_output .= '</a>';
-    $item_output .= $args->after;
-
-    $output .= apply_filters('walker_nav_menu_start_el', $item_output, $item, $depth, $args);
-  }
-}
-// register a new menu
-register_nav_menu('main-menu', 'Üstü Menü');
-register_nav_menu('footer-menu', 'Alt Menü'); 
 
 // JS CSS DOSYALARINDAN VERSİON KALDIR
 add_filter( 'style_loader_src',  'sdt_remove_ver_css_js', 9999, 2 );
