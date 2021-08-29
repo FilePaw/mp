@@ -1,5 +1,12 @@
-  function moneypressVer(){ echo "1.0.0";  }
+/* TEBRİKLER :) PEKTE ZOR OLMAYAN ŞİFRELEME YÖNTEMİMİ BAŞARIYLA AŞTIN.
+OLDUKÇA UYGUN FİYATA SATIŞA SUNDUĞUM GELİR KAYNAĞIMI DAĞITMAMANI TEMENNİ EDİYORUM. */
+
+error_reporting(E_ALL); ini_set("display_errors", 0);
+
+  function moneypressVer(){ return "1.0.0";  }
   
+  
+
 /* Tema Ayarları */
   function moneypressFunc($wp_customize){
 	$wp_customize->add_section( 'renk', array( 'title' => __( 'Renk Ayarları', 'moneypress' ), 'priority' => 1, ) );
@@ -41,11 +48,24 @@ $temaReklam[] = array(
 );
 
 $temaReklam[] = array(
-    'slug' => 'mp_kat_rek',
-	'type' => 'number',
-    'label' => __('Konu Listelerinin Arasına Reklam Kodu', 'moneypress')	
+    'slug' => 'mp_rek_si',
+	'type' => 'textarea',
+    'label' => __('Sidebar Reklam Alanı', 'moneypress')	
 );
 	
+$temaReklam[] = array(
+    'slug' => 'mp_kat_rek',
+	'type' => 'textarea',
+	'description' => 'İçerik listelemesi sırasında gösterilecek reklam',
+    'label' => __('Listeleme Bölümü Reklamları', 'moneypress')	
+);
+
+$temaReklam[] = array(
+    'slug' => 'mp_kat_rek_say',
+	'type' => 'number',
+	'description' => 'Reklamın içerik listesinde ki tekrar sayısı',
+    'label' => __('Listeleme Bölümü Reklam Tekrarı', 'moneypress')	
+);
 	
 foreach ($temaReklam as $icerik)
 {
@@ -57,6 +77,7 @@ foreach ($temaReklam as $icerik)
         'label' => $icerik['label'],
 		'type' => $icerik['type'],
         'section' => 'reklam',
+		'description' => $icerik['description'],
         'settings' => $icerik['slug']
     )));
 }
@@ -91,6 +112,7 @@ $temaBilesenler[] = array(
 	'default' => 'Bu içerikte neler var?',
     'label' => __('TOC Başlığı', 'moneypress')	
 );
+
 $temaBilesenler[] = array(
     'slug' => 'mp_post',
 	'type' => 'text',
@@ -109,6 +131,7 @@ foreach ($temaBilesenler as $icerik)
 {
     $wp_customize->add_setting($icerik['slug'], array(
         'type' => 'option',
+		'default' => $icerik['default'],
         'capability' => 'edit_theme_options'
     ));
 	
@@ -235,10 +258,9 @@ foreach ($temaBilesenler as $icerik)
   }
   add_action( 'customize_register', 'moneypressFunc' );
 	
-
   // Lisans  
 $lisans = get_option('mp_lisans');
-$adres = get_bloginfo('home');
+$adres = $_SERVER['SERVER_NAME'];
 $adres = str_replace(array('www.','https://','http://','/'),array('','','',''),$adres);
 $adres = str_replace("0","4",md5(bin2hex(crc32(bin2hex("$adres")))));
 if( ! is_admin() && $adres != $lisans ){ die("Geçersiz lisans kodu. 😞 Sorun olduğunu düşünüyorsanız lütfen benimle <a href='https://www.r10.net/profil/93341-atakanates.html'><b>buradan</b></a> iletişime geçiniz."); }
@@ -246,7 +268,6 @@ if( ! is_admin() && $adres != $lisans ){ die("Geçersiz lisans kodu. 😞 Sorun 
  
 // öne çıkan görsel
 add_theme_support( 'post-thumbnails');
-add_image_size( 'kucuk', 285, 150 );
 add_theme_support( 'custom-logo' );
 
 // wordpress versiyonu gizleme
@@ -390,17 +411,18 @@ if (get_option('mp_toc') == 1) {
 add_filter('the_content', 'tocAuto', 99);
 function tocAuto( $content )
 {
+	if (empty(get_option('mp_toc_b'))) : $baslik = "Bu içerikte neler var?"; else: $baslik = get_option('mp_toc_b'); endif;
 	
 	$h2Bul = preg_match_all("@<h2>(.*?)</h2>@si",$content,$h2Son);
 	
-$toc = '<ol class="list-group list-group-numbered mb-3"><span class="list-group-item arka text-white fw-bold" aria-current="true">'.get_option('mp_toc_b').'</span>';
+$toc = '<ol class="list-group list-group-numbered mb-3"><span class="list-group-item arka text-white fw-bold" aria-current="true">'.$baslik.'</span>';
 		for ($i =0; $i < $h2Bul; $i++) {
 			
 			/*H2 DÜZEN */
 			$h2alt = mb_strtolower($h2Son[1][$i],"UTF-8"); $h2alt = str_replace(array(" ","Ş","ş","İ","ı","Ğ","ğ","ü","Ü","ö","Ö",".",",","<","?","!"),array("-","s","s","i","i","g","g","u","u","o","o","-","-","","",""),$h2alt);$h2alt = trim($h2alt);
 			$content = str_replace($h2Son[1][$i],'<a name="'.$h2alt.'"></a>'.$h2Son[1][$i],$content);
 			
-			$toc .=  '<li class="list-group-item"><a href="#'.$h2alt.'">'.$h2Son[1][$i].'</a></li>';
+			$toc .=  '<li class="list-group-item"><a href="#'.$h2alt.'" rel="toc">'.$h2Son[1][$i].'</a></li>';
 		}
 $toc .= '</ol>';
 	
@@ -426,22 +448,18 @@ function footerDosya() { echo '<script src="'. get_bloginfo('template_url') .'/s
 
 function schemaOrg()
 {
-	$author_id=$post->post_author; $yazar = get_the_author_meta('display_name', $author_id);
+	
 	$logo = get_theme_mod( 'custom_logo' ); $logo = wp_get_attachment_image_src( $logo , 'full' );
 	
-/*Article*/
+if (is_single()) {
+$author_id=$post->post_author; $yazar = get_the_author_meta('display_name', $author_id);
 $schema = '<script type="application/ld+json"> { "@context": "https://schema.org", "@type": "'.get_option("mp_schema").'", "mainEntityOfPage": { "@type": "WebPage", "@id": "'. get_the_ID() .'", "@url": "'. get_the_permalink() .'" }, "headline": "'. get_the_title() .'", "description": "'. get_the_excerpt() .'", "image": "'.get_the_post_thumbnail_url().'", "author": { "@type": "Person", "name": "'.$yazar.'" }, "publisher": { "@type": "Organization", "name": "'.get_bloginfo("name").'", "logo": { "@type": "ImageObject", "url": "'.$logo[0].'" } }, "datePublished": "'.get_the_date( "d+m+Y+H:i:s", false, $post, true ).'", "dateModified": "'.get_post_modified_time( "d+m+Y+H:i:s", false, $post, true ).'" } </script>';
-
-
-echo $schema;
+} elseif (is_home()) { 
+$schema = '<script type="application/ld+json"> {    "@context": "https://schema.org/",   "@type": "WebSite",   "name": "'.get_bloginfo("name").'",   "url": "'.get_bloginfo("siteurl").'",   "potentialAction": {     "@type": "SearchAction",     "target": "'.get_bloginfo("siteurl").'/?s={search_term_string}",     "query-input": "required name=search_term_string"   } } </script>';
+} else {
+$schema = '<script type="application/ld+json"> {   "@context": "https://schema.org",   "@type": "Organization",   "name": "'.get_bloginfo("name").'",   "url": "'.get_bloginfo("siteurl").'",   "logo": "'.$logo.'" } </script>';
+}	echo $schema;
 }
-
-
-
-
-
-
-
 
 if (!is_admin() && get_option("mp_html") == 1) {
 class WP_HTML_Compression
@@ -471,7 +489,7 @@ class WP_HTML_Compression
    	 
    	 $savings = round($savings, 2);
    	 
-   	 return '<!-- MoneyPress - HTML başarıyla %'.$savings.' oranında sıkıştırıldı. -->';
+   	 return '<!-- MoneyPress - HTML %'.$savings.' oranında başarıyla sıkıştırıldı. -->';
     }
     protected function minifyHTML($html)
     {
@@ -583,10 +601,16 @@ add_action('get_header', 'wp_html_compression_start');
 }
 
 
+/* otomatik ekleme */
+function headEkle() {
+	if (is_single() && get_option("mp_yorum") == 1) { echo '<div id="fb-root"></div><script async defer crossorigin="anonymous" src="https://connect.facebook.net/tr_TR/sdk.js#xfbml=1&version=v11.0" nonce="85eJy2fy"></script>'; }
+	if (!empty(get_option("mp_adsense"))) { echo '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client='.get_option("mp_adsense").'" crossorigin="anonymous"></script>'; }	
+} add_action( 'wp_head', 'headEkle', 100 );
+
 
 
 /* Otomatik Reklam */
-if (!empty(get_option("mp_reklam")) && ! is_admin()) { 
+if (!empty(get_option("mp_reklam")) && ! is_admin()) {  
 function mpReklam( $content ) {
 	if (empty(get_option("mp_prag")) || get_option("mp_prag") < 0) : $paragrafSayisi = 5; else : $paragrafSayisi = get_option("mp_prag"); endif; 
 	$paragrafBul = explode ("</p>", $content);
@@ -600,6 +624,20 @@ function mpReklam( $content ) {
 }
     return $content;
 }
-  add_filter( 'the_content', 'mpReklam' );
+   add_filter( 'the_content', 'mpReklam' );
 }
 
+
+// Otomatik Reklam LİSTELEME REKLAM BÖLÜMÜ
+global $p;
+function reklamList() { $GLOBALS['p']++; 
+	if (!empty(get_option("mp_kat_rek_say")) && !empty(get_option("mp_kat_rek"))){ 
+if ($GLOBALS['p'] % get_option("mp_kat_rek_say") == 0) { 
+	if (get_option("mp_post") == 1) { echo '<div class="card mb-3"><div class="row g-0"><div class="col-md-12"><div class="card-body">'.get_option("mp_kat_rek").'</div></div></div></div>'; }
+	else { echo '<div class="card col-md-6" style="border:0px;"><div class="card-body">'.get_option("mp_kat_rek").'</div></div>'; }	
+		
+		 }
+ } } 
+
+include (TEMPLATEPATH . '/dosya/menu.php');
+include (TEMPLATEPATH . '/dosya/ek-functions.php');
