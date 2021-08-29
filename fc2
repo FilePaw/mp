@@ -1,3 +1,4 @@
+<?php
 /* TEBRİKLER :) PEKTE ZOR OLMAYAN ŞİFRELEME YÖNTEMİMİ BAŞARIYLA AŞTIN.
 OLDUKÇA UYGUN FİYATA SATIŞA SUNDUĞUM GELİR KAYNAĞIMI DAĞITMAMANI TEMENNİ EDİYORUM. */
 
@@ -641,3 +642,4 @@ if ($GLOBALS['p'] % get_option("mp_kat_rek_say") == 0) {
 
 include (TEMPLATEPATH . '/dosya/menu.php');
 include (TEMPLATEPATH . '/dosya/ek-functions.php');
+ ?>
